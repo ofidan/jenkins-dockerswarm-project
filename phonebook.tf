@@ -176,7 +176,7 @@ resource "aws_instance" "docker-machine-leader-manager" {
   user_data = data.template_file.leader-master.rendered
   tags = {
     Name = "oliver-Docker-Swarm-Leader-Manager"
-    Server = "docker-grand-master"
+    server = "docker-grand-master"
     project = "205"
   }
 }
@@ -192,7 +192,7 @@ resource "aws_instance" "docker-machine-managers" {
   user_data = data.template_file.manager.rendered
   tags = {
     Name = "oliver-Docker-Swarm-Manager-${count.index + 1}"
-    Server = "docker-manager-${count.index + 2}"
+    server = "docker-manager-${count.index + 2}"
     project = "205"
   }
   depends_on = [aws_instance.docker-machine-leader-manager]
@@ -209,7 +209,7 @@ resource "aws_instance" "docker-machine-workers" {
   user_data = data.template_file.worker.rendered
   tags = {
     Name = "oliver-Docker-Swarm-Worker-${count.index + 1}"
-    Server = "docker-worker-${count.index + 1}"
+    server = "docker-worker-${count.index + 1}"
     project = "205"
   }
   depends_on = [aws_instance.docker-machine-leader-manager]

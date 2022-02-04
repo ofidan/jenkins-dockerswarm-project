@@ -52,31 +52,9 @@ pipeline {
             }
         }
 
-        stage('Test the Infrastructure') {
-
-            steps {
-                echo "Testing if the Docker Swarm is ready or not, by checking Viz App on Grand Master with Public Ip Address: ${MASTER_INSTANCE_PUBLIC_IP}:8080"
-                script {
-                    while(true) {
-
-                        try {
-                          sh "curl -s --connect-timeout 60 ${MASTER_INSTANCE_PUBLIC_IP}:8080"
-                          echo "Successfully connected to Viz App."
-                          break
-                        }
-                        catch(Exception) {
-                          echo 'Could not connect Viz App'
-                          sleep(5)
-                        }
-                    }
-                }
-
-            }
-        }
-
         stage('Deploy App on Docker Swarm'){
             environment {
-                MASTER_INSTANCE_ID=sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=tag-value,Values=${AWS_STACK_NAME} --query Reservations[*].Instances[*].[InstanceId] --output text', returnStdout:true).trim()
+                MASTER_INSTANCE_ID=sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master --query Reservations[*].Instances[*].[InstanceId] --output text', returnStdout:true).trim()
             }
             steps {
 

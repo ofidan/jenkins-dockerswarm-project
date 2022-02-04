@@ -104,7 +104,7 @@ pipeline {
                 }
                 sh """
                 docker image prune -af
-                terraform destroy -lock=false
+                terraform destroy terraform destroy --auto-approve -lock=false
                 aws ecr delete-repository \
                   --repository-name ${APP_REPO_NAME} \
                   --region ${AWS_REGION} \

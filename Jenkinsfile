@@ -86,7 +86,7 @@ pipeline {
                      }
                    }
                  }
-
+             }
          }
 
         stage('Deploy App on Docker Swarm'){

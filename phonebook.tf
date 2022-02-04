@@ -37,6 +37,7 @@ data "template_file" "leader-master" {
     curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" \
     -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
+    yum install git -y
     docker swarm init
     docker service create \
       --name=viz \
@@ -44,7 +45,6 @@ data "template_file" "leader-master" {
       --constraint=node.role==manager \
       --mount=type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
       dockersamples/visualizer
-    yum install git -y
     # uninstall aws cli version 1
     rm -rf /bin/aws
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"

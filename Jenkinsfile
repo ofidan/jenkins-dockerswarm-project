@@ -103,6 +103,23 @@ pipeline {
             }
         }
 
+        stage('Deploy to Production Environment'){
+            steps{
+                timeout(time:5, unit:'DAYS'){
+                    input message:'Approve terminate'
+                }
+                sh """
+                docker image prune -af
+                terraform destroy -lock=false
+                PATH="$PATH:/usr/local/bin"
+                aws ecr delete-repository \
+                  --repository-name ${APP_REPO_NAME} \
+                  --region ${AWS_REGION} \
+                  --force
+                """
+            }
+        }
+
     }
     post {
         always {

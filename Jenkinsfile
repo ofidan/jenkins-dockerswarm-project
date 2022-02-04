@@ -1,4 +1,4 @@
-Pipeline {
+pipeline {
     agent any
     tools {
       terraform 'terraform'
@@ -49,24 +49,6 @@ Pipeline {
                 echo 'Creating Infrastructure for the App on AWS Cloud'
                 sh 'terraform init'
                 sh 'terraform apply --auto-approve'
-
-                script {
-
-                    while(true) {
-
-                        echo "Docker Grand Master is not UP and running yet. Will try to reach again after 10 seconds..."
-                        sleep(10)
-
-                        ip = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=tag-value,Values=${AWS_STACK_NAME} --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()
-
-                        if (ip.length() >= 7) {
-                            echo "Docker Grand Master Public Ip Address Found: $ip"
-                            env.MASTER_INSTANCE_PUBLIC_IP = "$ip"
-                            break
-                        }
-                    }
-                }
-
             }
         }
 

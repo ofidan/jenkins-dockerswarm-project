@@ -116,12 +116,12 @@ data "template_file" "worker" {
 }
 
 resource "aws_iam_instance_profile" "ec2ecr-profile" {
-  name = "aduncanswarmprofile"
+  name = "oliverswarmprofile"
   role = aws_iam_role.ec2fulltoecr.name
 }
 
 resource "aws_iam_role" "ec2fulltoecr" {
-  name = "aduncanec2roletoecr"
+  name = "oliverec2roletoecr"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -165,7 +165,7 @@ resource "aws_iam_role" "ec2fulltoecr" {
 
 resource "aws_instance" "docker-machine-leader-manager" {
   ami             = "ami-0a8b4cd432b1c3063"
-  instance_type   = "t2.micro"
+  instance_type   = "t2.medium"
   key_name        = "oliver"
   root_block_device {
       volume_size = 16

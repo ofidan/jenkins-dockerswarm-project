@@ -44,7 +44,8 @@ pipeline {
                 sh 'docker push "$ECR_REGISTRY/$APP_REPO_NAME:latest"'
             }
         }
-stage('Create Infrastructure for the App') {
+        
+        stage('Create Infrastructure for the App') {
             steps {
                 echo 'Creating Infrastructure for the App on AWS Cloud'
                 sh 'terraform init'
@@ -56,7 +57,6 @@ stage('Create Infrastructure for the App') {
                 """
                 }
             }
-        }
 
         stage('Test the Infrastructure') {
 

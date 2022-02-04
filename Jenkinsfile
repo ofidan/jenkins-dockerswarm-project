@@ -54,7 +54,7 @@ pipeline {
 
         stage('Deploy App on Docker Swarm'){
             environment {
-                MASTER_INSTANCE_ID=sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master --query Reservations[*].Instances[*].[InstanceId] --output text', returnStdout:true).trim()
+                MASTER_INSTANCE_ID=sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text', returnStdout:true).trim()
             }
             steps {
 

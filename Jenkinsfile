@@ -44,26 +44,15 @@ pipeline {
                 sh 'docker push "$ECR_REGISTRY/$APP_REPO_NAME:latest"'
             }
         }
-        stage('Create Infrastructure for the App') {
+stage('Create Infrastructure for the App') {
             steps {
                 echo 'Creating Infrastructure for the App on AWS Cloud'
                 sh 'terraform init'
                 sh 'terraform apply --auto-approve'
                 script {
-
-                     while(true) {
-
-                     echo "Docker Grand Master is not UP and running yet. Will try to reach again after 10 seconds..."
-                     sleep(10)
-
-                     ip = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()
-
-                     if (ip.length() >= 7) {
-                     echo "Docker Grand Master Public Ip Address Found: $ip"
-                     env.MASTER_INSTANCE_PUBLIC_IP = "$ip"
-                     break
-                     }
-                  }
+                    instance_id=aws ec2 describe-instances --filters "Name=tag-value,Values=docker-grand-master" Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text
+                    aws ec2 wait instance-status-ok --instance-ids $id
+                    env.MASTER_INSTANCE_PUBLIC_IP = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()  
                 }
             }
         }
@@ -111,7 +100,6 @@ pipeline {
                 sh """
                 docker image prune -af
                 terraform destroy -lock=false
-                PATH="$PATH:/usr/local/bin"
                 aws ecr delete-repository \
                   --repository-name ${APP_REPO_NAME} \
                   --region ${AWS_REGION} \

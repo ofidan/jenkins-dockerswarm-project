@@ -53,6 +53,12 @@ pipeline {
                 script {
                     id = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
                     sh 'aws ec2 wait instance-status-ok --instance-ids $id'
+                    
+                    mid = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-manager-2 Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
+                    sh 'aws ec2 wait instance-status-ok --instance-ids $mid'
+                    
+                    wid = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-worker-1 Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
+                    sh 'aws ec2 wait instance-status-ok --instance-ids $wid'
                     env.MASTER_INSTANCE_PUBLIC_IP = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()  
                 }
             }

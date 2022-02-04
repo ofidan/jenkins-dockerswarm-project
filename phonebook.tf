@@ -72,13 +72,14 @@ data "template_file" "manager" {
     amazon-linux-extras install epel -y
     yum install python-pip -y
     pip install ec2instanceconnectcli
-    eval "$(mssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  \
-    --region ${data.aws_region.current.name} ${aws_instance.docker-machine-leader-manager.id} docker swarm join-token manager | grep -i 'docker')"
     # uninstall aws cli version 1
     rm -rf /bin/aws
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip awscliv2.zip
     ./aws/install
+    aws ec2 wait instance-status-ok --instance-ids ${aws_instance.docker-machine-leader-manager.id}
+    eval "$(mssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  \
+    --region ${data.aws_region.current.name} ${aws_instance.docker-machine-leader-manager.id} docker swarm join-token manager | grep -i 'docker')"
     yum install amazon-ecr-credential-helper -y
     mkdir -p /home/ec2-user/.docker
     cd /home/ec2-user/.docker
@@ -101,13 +102,14 @@ data "template_file" "worker" {
     amazon-linux-extras install epel -y
     yum install python-pip -y
     pip install ec2instanceconnectcli
-    eval "$(mssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  \
-     --region ${data.aws_region.current.name} ${aws_instance.docker-machine-leader-manager.id} docker swarm join-token worker | grep -i 'docker')"
     # uninstall aws cli version 1
     rm -rf /bin/aws
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip awscliv2.zip
     ./aws/install
+    aws ec2 wait instance-status-ok --instance-ids ${aws_instance.docker-machine-leader-manager.id}
+    eval "$(mssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  \
+     --region ${data.aws_region.current.name} ${aws_instance.docker-machine-leader-manager.id} docker swarm join-token worker | grep -i 'docker')"
     yum install amazon-ecr-credential-helper -y
     mkdir -p /home/ec2-user/.docker
     cd /home/ec2-user/.docker

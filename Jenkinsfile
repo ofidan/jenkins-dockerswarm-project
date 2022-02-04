@@ -49,8 +49,44 @@ pipeline {
                 echo 'Creating Infrastructure for the App on AWS Cloud'
                 sh 'terraform init'
                 sh 'terraform apply --auto-approve'
+                script {
+
+                     while(true) {
+
+                     echo "Docker Grand Master is not UP and running yet. Will try to reach again after 10 seconds..."
+                     sleep(10)
+
+                     ip = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()
+
+                     if (ip.length() >= 7) {
+                     echo "Docker Grand Master Public Ip Address Found: $ip"
+                     env.MASTER_INSTANCE_PUBLIC_IP = "$ip"
+                     break
+                     }
+                  }
             }
         }
+
+        stage('Test the Infrastructure') {
+
+             steps {
+                 echo "Testing if the Docker Swarm is ready or not, by checking Viz App on Grand Master with Public Ip Address: ${MASTER_INSTANCE_PUBLIC_IP}:8080"
+                 script {
+                 while(true) {
+
+                 try {
+                    sh "curl -s --connect-timeout 60 ${MASTER_INSTANCE_PUBLIC_IP}:8080"
+                    echo "Successfully connected to Viz App."
+                    break
+                    }
+                 catch(Exception) {
+                    echo 'Could not connect Viz App'
+                    sleep(5)
+                     }
+                   }
+                 }
+
+         }
 
         stage('Deploy App on Docker Swarm'){
             environment {

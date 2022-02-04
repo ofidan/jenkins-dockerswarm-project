@@ -8,11 +8,8 @@ pipeline {
         AWS_REGION = "us-east-1"
         AWS_ACCOUNT_ID=sh(script:'export PATH="$PATH:/usr/local/bin" && aws sts get-caller-identity --query Account --output text', returnStdout:true).trim()
         ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        // ECR_REGISTRY = "046402772087.dkr.ecr.us-east-1.amazonaws.com"
         APP_REPO_NAME = "clarusway-repo/phonebook-app"
         APP_NAME = "phonebook"
-        AWS_STACK_NAME = "Call-Phonebook-App-${BUILD_NUMBER}"
-        CFN_TEMPLATE="phonebook-docker-swarm-cfn-template.yml"
         CFN_KEYPAIR="oliver"
         HOME_FOLDER = "/home/ec2-user"
         GIT_FOLDER = sh(script:'echo ${GIT_URL} | sed "s/.*\\///;s/.git$//"', returnStdout:true).trim()
@@ -50,17 +47,18 @@ pipeline {
                 echo 'Creating Infrastructure for the App on AWS Cloud'
                 sh 'terraform init'
                 sh 'terraform apply --auto-approve'
-                script {
-                    id = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
-                    sh 'aws ec2 wait instance-status-ok --instance-ids $id'
+
+                echo 'Waiting for Leader Manager'
+                id = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
+                sh 'aws ec2 wait instance-status-ok --instance-ids $id'
+
+                echo 'Leader manager is running'
+                mid = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-manager-2 Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
+                sh 'aws ec2 wait instance-status-ok --instance-ids $mid'
                     
-                    mid = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-manager-2 Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
-                    sh 'aws ec2 wait instance-status-ok --instance-ids $mid'
-                    
-                    wid = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-worker-1 Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
-                    sh 'aws ec2 wait instance-status-ok --instance-ids $wid'
-                    env.MASTER_INSTANCE_PUBLIC_IP = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()  
-                }
+                wid = sh(script: 'aws ec2 describe-instances --filters Name=tag-value,Values=docker-worker-1 Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[InstanceId] --output text',  returnStdout:true).trim()
+                sh 'aws ec2 wait instance-status-ok --instance-ids $wid'
+                env.MASTER_INSTANCE_PUBLIC_IP = sh(script:'aws ec2 describe-instances --region ${AWS_REGION} --filters Name=tag-value,Values=docker-grand-master Name=instance-state-name,Values=running --query Reservations[*].Instances[*].[PublicIpAddress] --output text | sed "s/\\s*None\\s*//g"', returnStdout:true).trim()  
             }
         }
 
@@ -92,9 +90,8 @@ pipeline {
             steps {
 
                 echo "Cloning and Deploying App on Swarm using Grand Master with Instance Id: $MASTER_INSTANCE_ID"
-                sleep(10)
                 sh 'mssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no --region ${AWS_REGION} ${MASTER_INSTANCE_ID} git clone ${GIT_URL}'
-                sleep(15)
+                sleep(20)
                 sh 'mssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no --region ${AWS_REGION} ${MASTER_INSTANCE_ID} docker stack deploy --with-registry-auth -c ${HOME_FOLDER}/${GIT_FOLDER}/docker-compose.yml ${APP_NAME}'
             }
         }

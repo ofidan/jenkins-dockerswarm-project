@@ -93,7 +93,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Production Environment'){
+        stage('Destroy the infrastructure'){
             steps{
                 timeout(time:5, unit:'DAYS'){
                     input message:'Approve terminate'
